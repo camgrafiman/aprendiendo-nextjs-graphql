@@ -7,12 +7,11 @@ import { iniciarApollo } from '../librerias/apollo';
 // Estilos:
 import styles from '../styles/Home.module.css'
 
-// Test con un id, en este caso un Int.
-const VARIABLE = 1;
 
-export default function Home() {
+export default function Post({ queryId }) {
+    console.log(queryId);
   // usar el hook useQuery para obtener datos:
-  const { data, error, loading } = useQuery(GET_POST_BY_ID, { variables: { id: VARIABLE } });
+  const { data, error, loading } = useQuery(GET_POST_BY_ID, { variables: { id: queryId } });
 
   if (loading) return <h1>Cargando...</h1>;
 
@@ -24,13 +23,13 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Posts</title>
+        <title>Post único</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          {data?.posts[0].titulo}
+        <h1 className={styles.card}>
+          {data.posts[0].titulo}
         </h1>
 
       </main>
@@ -49,18 +48,20 @@ export default function Home() {
   )
 }
 
-// método de next.js para conseguir datos del lado del servidor:
-export const getServerSideProps = async () => {
+// En este caso usaré el id del parámetro de la url para conseguir el post correspondiente:
+export const getServerSideProps = async ({ query }) => {
+    const queryId = parseInt(query.id);
+    console.log("queryId es igual a: ", typeof queryId)
+
   // primero inicio el cliente:
   const clienteApollo = iniciarApollo();
   await clienteApollo.query({
     query: GET_POST_BY_ID,
-    variables: { id: VARIABLE }
+    variables: { id: queryId }
   });
 
-  // y ahora retorno la data al props, que será enviado a los props del componente Home.
-
+  // y ahora retorno la data al props, que será enviado a los props del componente Post. IMPORTANTE pasar el queryId como parámetro:
   return {
-    props: { initialApolloState: clienteApollo.cache.extract()}
+    props: { initialApolloState: clienteApollo.cache.extract(), queryId}
   }
 }
